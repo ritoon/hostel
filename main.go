@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func main() {
@@ -23,7 +24,15 @@ func getUser(c *gin.Context) {
 }
 
 func createUser(c *gin.Context) {
-	c.String(http.StatusOK, "Hello")
+	var u User
+	err := c.BindJSON(&u)
+	if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+	u.ID = uuid.New().String()
+	userList[u.ID] = &u
+	c.JSON(http.StatusOK, u)
 }
 
 func updateUser(c *gin.Context) {
