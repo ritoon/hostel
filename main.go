@@ -18,7 +18,79 @@ func main() {
 	router.PATCH("/users/:id", updateUser)
 	router.DELETE("/users/:id", deleteUser)
 
+	router.GET("/hotels", searchHotels)
+	router.GET("/hotels/:id", getHotelsById)
+	router.POST("/hotels", createHotels)
+	router.PUT("/hotels/:id", updateHotels)
+	router.PATCH("/hotels/:id", updateHotels)
+	router.DELETE("/hotels/:id", deleteHotels)
+
 	router.Run()
+}
+
+func deleteHotels(c *gin.Context) {
+	id := c.Param("id")
+	_, ok := hotelList[id]
+	if !ok {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	delete(hotelList, id)
+}
+
+func updateHotels(c *gin.Context) {
+	id := c.Param("id")
+	h := hotelList[id]
+	if h == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	payload := make(map[string]interface{})
+	err := c.BindJSON(&payload)
+	if err != nil {
+		log.Println(err)
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	if v, ok := payload["email"]; ok {
+		h.Email = v.(string)
+	}
+	if v, ok := payload["nb_bedrooms"]; ok {
+		h.NbBedrooms = v.(string)
+	}
+	if v, ok := payload["address"]; ok {
+		h.Email = v.(string)
+	}
+
+	c.JSON(http.StatusOK, h)
+}
+
+func createHotels(c *gin.Context) {
+	var h Hotel
+	err := c.BindJSON(&h)
+	if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+	h.ID = uuid.New().String()
+	hotelList[h.ID] = &h
+	c.JSON(http.StatusOK, h)
+}
+
+func getHotelsById(c *gin.Context) {
+	id := c.Param("id")
+	u, ok := hotelList[id]
+	if !ok {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+	c.JSON(http.StatusOK, u)
+}
+
+func searchHotels(c *gin.Context) {
+	c.JSON(http.StatusOK, hotelList)
 }
 
 func searchUser(c *gin.Context) {
@@ -96,3 +168,13 @@ type User struct {
 }
 
 var userList = map[string]*User{}
+
+type Hotel struct {
+	ID         string `json:"id,omitempty"`
+	Phone      string `json:"phone,omitempty"`
+	Email      string `json:"email,omitempty"`
+	NbBedrooms string `json:"nb_bedrooms,omitempty"`
+	Address    string `json:"address,omitempty"`
+}
+
+var hotelList = map[string]*Hotel{}
