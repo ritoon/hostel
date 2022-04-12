@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -48,7 +49,32 @@ func createUser(c *gin.Context) {
 }
 
 func updateUser(c *gin.Context) {
-	c.String(http.StatusOK, "Hello")
+	id := c.Param("id")
+	u := userList[id]
+	if u == nil {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	payload := make(map[string]interface{})
+	err := c.BindJSON(&payload)
+	if err != nil {
+		log.Println(err)
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	if v, ok := payload["first_name"]; ok {
+		u.FirstName = v.(string)
+	}
+	if v, ok := payload["last_name"]; ok {
+		u.LastName = v.(string)
+	}
+	if v, ok := payload["email"]; ok {
+		u.Email = v.(string)
+	}
+
+	c.JSON(http.StatusOK, u)
 }
 
 func deleteUser(c *gin.Context) {
@@ -63,10 +89,10 @@ func deleteUser(c *gin.Context) {
 }
 
 type User struct {
-	ID        string
-	FirstName string
-	LastName  string
-	Email     string
+	ID        string `json:"id"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
 }
 
 var userList = map[string]*User{}
